@@ -7,28 +7,35 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
-	polygonzkevmelderberry "github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevm"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/pol"
 	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonrollupmanager"
+	polygonzkevmelderberry "github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevm"
 	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 const (
 	SequencerAdminAddress = "0xff6250d0E86A2465B0C1bF8e36409503d6a26963"
-	NewSequencerAddress = "0x2536C2745Ac4A584656A830f7bdCd329c94e8F30"
+	NewSequencerAddress = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+	NewSequencerAddressPrivateKey = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+	OldSequencerAddress = "0x761d53b47334bEe6612c0Bd1467FB881435375B2"
 	AggregatorAdminAddress = "0xff6250d0E86A2465B0C1bF8e36409503d6a26963"
-	NewAggregatorAddress = "0xff6250d0E86A2465B0C1bF8e36409503d6a26963"
+	NewAggregatorAddress = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
 	ZKEVMAddress = "0xA13Ddb14437A8F34897131367ad3ca78416d6bCa"
 	RollupManagerAddr = "0x32d33D5137a7cFFb54c5Bf8371172bcEc5f310ff"
+	PolAddress = "0x6a7c3F4B0651d6DA389AD1d11D962ea458cDCA70"
 	URL = "http://localhost:8545"
+	PolAmount = "10000000000000000000000"
 	// DefaultInterval is a time interval
 	DefaultWaitInterval = 2 * time.Millisecond
 )
@@ -54,10 +61,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("error creating NewPolygonrollupmanager client (%s). Error: %v", RollupManagerAddr, err)
 	}
-	// auth, err := generateRandomAuth(ctx, ethClient)
-	// if err != nil {
-	// 	log.Fatalf("error generating random auth. Error: %v", err)
-	// }
 	err = changeSequencerAddress(ctx, ethClient, common.HexToAddress(NewSequencerAddress), common.HexToAddress(SequencerAdminAddress), zkevm)
 	if err != nil {
 		log.Fatal("error changing sequencer address. Error: ", err)
@@ -65,6 +68,10 @@ func main() {
 	err = changeAggregatorAddress(ctx, ethClient, common.HexToAddress(NewAggregatorAddress), common.HexToAddress(AggregatorAdminAddress), rollupManager)
 	if err != nil {
 		log.Fatal("error changing sequencer address. Error: ", err)
+	}
+	err = sendPolTokensToNewSequencerAddress(ctx, ethClient, common.HexToAddress(NewSequencerAddress), common.HexToAddress(OldSequencerAddress))
+	if err != nil {
+		log.Fatal("error sending pol tokens to the new address. Error: ", err)
 	}
 }
 
@@ -117,6 +124,46 @@ func changeAggregatorAddress(ctx context.Context, ethClient *ethclient.Client, n
 		return err
 	} else if !ok {
 		return fmt.Errorf("error setting new trusted aggregator address. New aggregator address (%s) hasn't the role TRUSTED_AGGREGATOR_ROLE (%s)", newAggAddress.String(), TRUSTED_AGGREGATOR_ROLE.String())
+	}
+	return nil
+}
+
+func sendPolTokensToNewSequencerAddress(ctx context.Context, ethClient *ethclient.Client, newSeqAddress, oldSequencerAddress common.Address) error {
+	err := impersonateAccount(oldSequencerAddress)
+	if err != nil {
+		return err
+	}	
+	privateKey, err := crypto.HexToECDSA(strings.TrimPrefix(NewSequencerAddressPrivateKey, "0x"))
+	if err != nil {
+		return err
+	}
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		return err
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		log.Error("Error getting signer. Error: ", err)
+		return err
+	}
+	amount, _ := big.NewInt(0).SetString(PolAmount, 0)
+	err = sendPolTokens(ctx, ethClient, newSeqAddress, oldSequencerAddress, amount)
+	if err != nil {
+		return err
+	}
+	p, err := pol.NewPol(common.HexToAddress(PolAddress), ethClient)
+	if err != nil {
+		log.Errorf("error creating NewPol client (%s). Error: %v", PolAddress, err)
+		return err
+	}
+	tx, err := p.Approve(auth, common.HexToAddress(ZKEVMAddress), amount)
+	if err != nil {
+		return err
+	}
+	log.Debug("Approve pol tx sent. TxHash: ", tx.Hash())
+	err = stopImpersonatingAccount(oldSequencerAddress)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -203,6 +250,49 @@ func setNewSequencerAddress(ctx context.Context, ethClient *ethclient.Client, ne
 		return fmt.Errorf("error stop setting new trusted sequencer. Error: %s", respBody.Error.Message)
 	}
 	log.Debugf("NewSequencer transaction response: %+v", *respBody.Result)
+	// Wait until tx is mined
+	timeout := 20 * time.Second
+	_, err = WaitTxReceipt(ctx, common.HexToHash((*respBody.Result).(string)), timeout, ethClient)
+	return err
+}
+func sendPolTokens(ctx context.Context, ethClient *ethclient.Client, newSeqAddress, oldSequencerAddress common.Address, amount *big.Int) error {
+	a, _ := pol.PolMetaData.GetAbi()
+	input, err := a.Pack("transfer", newSeqAddress, amount)
+	if err != nil {
+		log.Error("error packing call transfer. Error: ", err)
+		return err
+	}
+	tx := Tx {
+		From: oldSequencerAddress.String(),
+		To:   PolAddress,
+		Data: fmt.Sprintf("0x%s",common.Bytes2Hex(input)),
+	}
+	body := RequestBody {
+		Jsonrpc: "2.0",
+		Method:  "eth_sendTransaction",
+		Params:  []interface{}{tx},
+		Id:      1,
+	}
+	reqBody, err := json.Marshal(body)
+    if err != nil {
+		log.Errorf("error marshalling in send pol tokens. Error: %v", err)
+        return err
+    }
+	bodyBytes, err := callRpc(reqBody)
+	if err != nil {
+		log.Errorf("error calling RPC in send pol tokens. Error: %v", err)
+		return err
+	}
+	var respBody ResponseBody
+	err = json.Unmarshal(bodyBytes, &respBody)
+	if err != nil {
+		log.Errorf("error unmarshalling response body in stop send pol tokens. Error: %v", err)
+		return err
+	}
+	if respBody.Error != nil {
+		return fmt.Errorf("error stop send pol tokens. Error: %s", respBody.Error.Message)
+	}
+	log.Debugf("Send Pol transaction response: %+v", *respBody.Result)
 	// Wait until tx is mined
 	timeout := 20 * time.Second
 	_, err = WaitTxReceipt(ctx, common.HexToHash((*respBody.Result).(string)), timeout, ethClient)
@@ -314,81 +404,6 @@ func callRpc(reqBody []byte) ([]byte, error) {
 	}
 	return bodyBytes, nil
 }
-
-// func generateRandomAuth(ctx context.Context, ethClient *ethclient.Client) (bind.TransactOpts, error) {
-// 	privateKey, err := crypto.GenerateKey()
-// 	if err != nil {
-// 		return bind.TransactOpts{}, errors.New("failed to generate a private key to estimate L1 txs")
-// 	}
-// 	chainID, err := ethClient.ChainID(ctx)
-// 	if err != nil {
-// 		return bind.TransactOpts{}, errors.New("failed to read chainID to estimate L1 txs")
-// 	}
-// 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-// 	if err != nil {
-// 		return bind.TransactOpts{}, errors.New("failed to generate a fake authorization to estimate L1 txs")
-// 	}
-// 	return *auth, nil
-// }
-
-// // WaitTxToBeMined waits until a tx has been mined or the given timeout expires.
-// func WaitTxToBeMined(parentCtx context.Context, ethClient *ethclient.Client, tx *types.Transaction, timeout time.Duration) error {
-// 	ctx, cancel := context.WithTimeout(parentCtx, timeout)
-// 	defer cancel()
-// 	receipt, err := bind.WaitMined(ctx, ethClient, tx)
-// 	if errors.Is(err, context.DeadlineExceeded) {
-// 		return err
-// 	} else if err != nil {
-// 		log.Errorf("error waiting tx %s to be mined: %w", tx.Hash(), err)
-// 		return err
-// 	}
-// 	if receipt.Status == types.ReceiptStatusFailed {
-// 		// Get revert reason
-// 		reason, reasonErr := RevertReason(ctx, ethClient, tx, receipt.BlockNumber)
-// 		if reasonErr != nil {
-// 			reason = reasonErr.Error()
-// 		}
-// 		return fmt.Errorf("transaction has failed, reason: %s, receipt: %+v. tx: %+v, gas: %v", reason, receipt, tx, tx.Gas())
-// 	}
-// 	log.Debug("Transaction successfully mined: ", tx.Hash())
-// 	return nil
-// }
-
-// // RevertReason returns the revert reason for a tx that has a receipt with failed status
-// func RevertReason(ctx context.Context, ethClient *ethclient.Client, tx *types.Transaction, blockNumber *big.Int) (string, error) {
-// 	if tx == nil {
-// 		return "", nil
-// 	}
-
-// 	from, err := types.Sender(types.NewEIP155Signer(tx.ChainId()), tx)
-// 	if err != nil {
-// 		signer := types.LatestSignerForChainID(tx.ChainId())
-// 		from, err = types.Sender(signer, tx)
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 	}
-// 	msg := ethereum.CallMsg{
-// 		From: from,
-// 		To:   tx.To(),
-// 		Gas:  tx.Gas(),
-
-// 		Value: tx.Value(),
-// 		Data:  tx.Data(),
-// 	}
-// 	hex, err := ethClient.CallContract(ctx, msg, blockNumber)
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	unpackedMsg, err := abi.UnpackRevert(hex)
-// 	if err != nil {
-// 		log.Warnf("failed to get the revert message for tx %v: %v", tx.Hash(), err)
-// 		return "", errors.New("execution reverted")
-// 	}
-
-// 	return unpackedMsg, nil
-// }
 
 func WaitTxReceipt(ctx context.Context, txHash common.Hash, timeout time.Duration, client *ethclient.Client) (*types.Receipt, error) {
 	if client == nil {

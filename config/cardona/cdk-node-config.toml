@@ -1,0 +1,147 @@
+ForkUpgradeBatchNumber = 0
+ForkUpgradeNewForkId = 0
+
+[Common]
+IsValidiumMode = false
+ContractVersions = "elderberry"
+
+[Etherman]
+URL = "http://localhost:8545"
+
+[Log]
+Environment = "development" # "production" or "development"
+Level = "info"
+Outputs = ["stderr"]
+
+[SequenceSender]
+IsValidiumMode = false # needed ?
+WaitPeriodSendSequence = "3m"
+LastBatchVirtualizationTimeMaxWaitPeriod = "3600s"
+L1BlockTimestampMargin = "120s"
+MaxTxSizeForL1 = 131072
+L2Coinbase =  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+PrivateKey = {Path = "/app/sequencer.keystore", Password = "testonly"}
+SequencesTxFileName = "/app/data/sequencesender.json"
+GasOffset = 80000
+WaitPeriodPurgeTxFile = "2h"
+MaxPendingTx = 1
+MaxBatchesForL1 = 300
+# BlockFinality="SafeBlock" # TODO: should be finalized but it breaks :)
+RPCURL = "http://localhost:8123"
+GetBatchWaitInterval = "10s"
+	[SequenceSender.EthTxManager]
+		StoragePath = "/tmp/ethtxmanager.db"
+		FrequencyToMonitorTxs = "10s"
+		WaitTxToBeMined = "2m"
+		SafeStatusL1NumberOfBlocks = 0
+        FinalizedStatusL1NumberOfBlocks = 0
+		WaitReceiptMaxTime = "250ms"
+		WaitReceiptCheckInterval = "8s"
+		PrivateKeys = [
+			{Path = "/app/sequencer.keystore", Password = "testonly"},
+		]
+		ForcedGas = 0
+		GasPriceMarginFactor = 1
+		MaxGasPriceLimit = 0
+		[SequenceSender.EthTxManager.Etherman]
+			URL = "http://localhost:8545"
+			L1ChainID = 11155111
+			HTTPHeaders = []
+
+[Aggregator]
+FinalProofSanityCheckEnabled = false
+BatchProofSanityCheckEnabled = true
+Host = "0.0.0.0"
+Port = 50081
+RetryTime = "5s"
+VerifyProofInterval = "60m"
+ProofStatePollingInterval = "5s"
+TxProfitabilityCheckerType = "acceptall"
+TxProfitabilityMinReward = "1.1"
+IntervalAfterWhichBatchConsolidateAnyway = "0s"
+ChainID = 781
+ForkId = 11
+CleanupLockedProofsInterval = "120m"
+GeneratingProofCleanupThreshold = "10m"
+GasOffset = 30000
+UpgradeEtrogBatchNumber = 4794474 
+WitnessURL = "http://cdk-erigon:8123"
+SenderAddress = "0x3053c70212FA80903cA98B72CDE30333896c559A"
+UseL1BatchData = true 
+UseFullWitness = false 
+MaxWitnessRetrievalWorkers = 2
+SyncModeOnlyEnabled = false
+SettlementBackend = "agglayer"
+AggLayerTxTimeout = "600s"
+AggLayerURL = "https://agglayer-dev.polygon.technology"
+
+[Aggregator.SequencerPrivateKey]
+	Path = "/app/sequencer.keystore"
+	Password = "testonly"
+[Aggregator.DB]
+	Name = "aggregator_db"
+	User = "aggregator_user"
+	Password = "aggregator_password"
+	Host = "zkevm10-db"
+	Port = "5432"
+	EnableLog = false
+	MaxConns = 200
+[Aggregator.Log]
+	Environment = "development" # "production" or "development"
+	Level = "info"
+	Outputs = ["stderr"]
+[Aggregator.StreamClient]
+	Server = "cdk-erigon:6900"
+[Aggregator.EthTxManager]
+	FrequencyToMonitorTxs = "1s"
+	WaitTxToBeMined = "2m"
+	WaitReceiptMaxTime = "250ms"
+	WaitReceiptCheckInterval = "1s"
+	PrivateKeys = [
+	{Path = "/pk/aggregator.keystore", Password = "testonly"},
+	]
+	ForcedGas = 0
+	GasPriceMarginFactor = 1
+	MaxGasPriceLimit = 0
+	StoragePath = ""
+	ReadPendingL1Txs = false
+	SafeStatusL1NumberOfBlocks = 0
+	FinalizedStatusL1NumberOfBlocks = 0
+	[Aggregator.EthTxManager.Etherman]
+		URL = "http://localhost:8545"
+		L1ChainID = 11155111
+		HTTPHeaders = []
+[Aggregator.Synchronizer]
+	[Aggregator.Synchronizer.Log]
+		Level = "debug"
+	[Aggregator.Synchronizer.SQLDB]
+		DriverName = "sqlite3"
+		DataSource = "file:/tmp/aggregator_sync_db.sqlite"
+	[Aggregator.Synchronizer.Synchronizer]
+		SyncInterval = "10s"
+		SyncChunkSize = 1000
+		GenesisBlockNumber = 0  
+		SyncUpToBlock = "finalized"
+		BlockFinality = "finalized"
+		OverrideStorageCheck = false
+	[Aggregator.Synchronizer.Etherman]
+		[Aggregator.Synchronizer.Etherman.Validium]
+			Enabled = false 
+
+[L1InfoTreeSync]
+	DBPath = "/tmp/L1InfoTreeSync" # TODO: put a more realisitic path here
+	GlobalExitRootAddr = "0xAd1490c248c5d3CbAE399Fd529b79B42984277DF"
+	RollupManagerAddr = "0x32d33D5137a7cFFb54c5Bf8371172bcEc5f310ff"
+	SyncBlockChunkSize = 10
+	BlockFinality = "LatestBlock"
+	URLRPCL1 = "http://localhost:8545"
+	WaitForNewBlocksPeriod = "1s"
+	InitialBlock = 4794474
+ 
+
+[NetworkConfig.L1]
+	L1ChainID = "11155111"
+	PolAddr = "0x6a7c3F4B0651d6DA389AD1d11D962ea458cDCA70"
+	ZkEVMAddr = "0xA13Ddb14437A8F34897131367ad3ca78416d6bCa"
+	RollupManagerAddr = "0x32d33D5137a7cFFb54c5Bf8371172bcEc5f310ff"
+	GlobalExitRootManagerAddr = "0xAd1490c248c5d3CbAE399Fd529b79B42984277DF"
