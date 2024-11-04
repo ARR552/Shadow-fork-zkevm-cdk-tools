@@ -49,8 +49,3 @@ docker compose -f docker-compose.yml stop zkevm-pool-manager && docker compose -
 docker compose -f docker-compose.yml stop zkevm-shadow-fork && docker compose -f docker-compose.yml rm -f zkevm-shadow-fork
 docker compose -f docker-compose.yml stop zkevm-ssender && docker compose -f docker-compose.yml rm -f zkevm-ssender
 docker compose -f docker-compose.yml stop zkevm-aggregator && docker compose -f docker-compose.yml rm -f zkevm-aggregator
-
-
-
-
-# zkevm.l1-sync-start-block: 4789190 #disable this param to avoid recovery mode
