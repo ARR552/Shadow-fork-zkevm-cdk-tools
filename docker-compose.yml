@@ -1,6 +1,6 @@
-networks:
-  default:
-    name: zkevm
+# networks:
+#   default:
+#     name: zkevm
 services:
   zkevm-state-db:
     container_name: zkevm-state-db
@@ -16,9 +16,9 @@ services:
     volumes:
       - ./config/scripts/init_prover_db.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
-      - POSTGRES_USER=state_user
-      - POSTGRES_PASSWORD=state_password
-      - POSTGRES_DB=state_db
+      - POSTGRES_USER=aggregator_user
+      - POSTGRES_PASSWORD=aggregator_password
+      - POSTGRES_DB=aggregator_db
     command:
       - "postgres"
       - "-N"
@@ -45,12 +45,10 @@ services:
       - "500"
 
   zkevm-prover:
+    network_mode: host
     container_name: zkevm-prover
     restart: unless-stopped
-    image: hermeznetwork/zkevm-prover:v8.0.0-RC12-fork.12
-    depends_on:
-      zkevm-state-db:
-        condition: service_healthy
+    image: hermeznetwork/zkevm-prover:v7.0.4-fork.11
     ports:
       - 50061:50061 # MT
       - 50071:50071 # Executor
@@ -63,7 +61,8 @@ services:
     network_mode: host
     user: root
     container_name: cdk-erigon
-    image: hermeznetwork/cdk-erigon:0948e33
+    image: hermeznetwork/cdk-erigon:v2.0.0
+    restart: always 
     ports:
       - 9092:9092
       - 6900:6900
@@ -77,19 +76,19 @@ services:
       - "-c"
       - "chmod -R 777 /home/erigon/erigon/ && CDK_ERIGON_SEQUENCER=1 cdk-erigon --config /etc/cdk-erigon/config.yaml"
   
-  zkevm-seqsender:
-    network_mode: host
-    container_name: zkevm-seqsender
-    image: hermeznetwork/zkevm-sequence-sender:v0.2.4
-    volumes:
-      - ./config/${CDK_ENVIRONMENT}/sequence-sender.config.toml:/app/config.toml
-      - ./config/${CDK_ENVIRONMENT}/genesis.json:/app/genesis.json
-      - ./config/sequencer.keystore:/app/sequencer.keystore
-      # - data:/app/data
-    command:
-      - "/bin/sh"
-      - "-c"
-      - "/app/zkevm-seqsender run --cfg /app/config.toml --network custom --custom-network-file /app/genesis.json"
+  # zkevm-seqsender:
+  #   network_mode: host
+  #   container_name: zkevm-seqsender
+  #   image: hermeznetwork/zkevm-sequence-sender:v0.2.4
+  #   volumes:
+  #     - ./config/${CDK_ENVIRONMENT}/sequence-sender.config.toml:/app/config.toml
+  #     - ./config/${CDK_ENVIRONMENT}/genesis.json:/app/genesis.json
+  #     - ./config/sequencer.keystore:/app/sequencer.keystore
+  #     # - data:/app/data
+  #   command:
+  #     - "/bin/sh"
+  #     - "-c"
+  #     - "/app/zkevm-seqsender run --cfg /app/config.toml --network custom --custom-network-file /app/genesis.json"
 
   zkevm-pool-manager:
     container_name: zkevm-pool-manager
@@ -124,20 +123,37 @@ services:
     command:
       - "anvil --block-time 12 --port 8548 --fork-url $${L1_PROVIDER_URL} --fork-block-number 6787526"
 
-  zkevm-node-ssender:
+  zkevm-ssender:
     network_mode: host
-    container_name: zkevm-node-ssender
-    image: ghcr.io/0xpolygon/cdk:0.2.1
-    ports:
-      - 10010:50081
+    container_name: zkevm-ssender
+    image: ghcr.io/0xpolygon/cdk:0.3.1
+    restart: always 
     volumes:
-      - ./config/${CDK_ENVIRONMENT}/data-cdk-node:/app/data
+      - ./config/${CDK_ENVIRONMENT}/data-cdk-node/ssender-data:/app/data
       - ./config/${CDK_ENVIRONMENT}/genesis.json:/app/genesis.json:ro
       - ./config/${CDK_ENVIRONMENT}/cdk-node-config.toml:/app/config.toml:ro
       - ./config/sequencer.keystore:/app/sequencer.keystore:ro
       #- ./config/aggregator.keystore:/pk/aggregator.keystore:ro
-      #- ./config/data-cdk-node/tmp:/tmp
+      #- ./config/${CDK_ENVIRONMENT}/data-cdk-node/tmp-ssender:/tmp
     command:
       - "/bin/sh"
       - "-c"
       - "cdk-node run -custom-network-file=/app/genesis.json -cfg=/app/config.toml -components=sequence-sender"
+
+  zkevm-aggregator:
+    network_mode: host
+    container_name: zkevm-aggregator
+    image: ghcr.io/0xpolygon/cdk:0.3.1
+    ports:
+      - 50081:50081
+    volumes:
+      #- ./config/${CDK_ENVIRONMENT}/data-cdk-node/aggregator-data:/app/data
+      - ./config/${CDK_ENVIRONMENT}/genesis.json:/app/genesis.json:ro
+      - ./config/${CDK_ENVIRONMENT}/cdk-node-config.toml:/app/config.toml:ro
+      # - ./config/sequencer.keystore:/app/sequencer.keystore:ro
+      - ./config/aggregator.keystore:/pk/aggregator.keystore:ro
+      - ./config/${CDK_ENVIRONMENT}/data-cdk-node/tmp-aggregator:/tmp
+    command:
+      - "/bin/sh"
+      - "-c"
+      - "cdk-node run -custom-network-file=/app/genesis.json -cfg=/app/config.toml -components=aggregator"

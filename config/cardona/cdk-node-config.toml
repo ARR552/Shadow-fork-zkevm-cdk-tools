@@ -15,10 +15,10 @@ Outputs = ["stderr"]
 
 [SequenceSender]
 IsValidiumMode = false # needed ?
-WaitPeriodSendSequence = "3m"
-LastBatchVirtualizationTimeMaxWaitPeriod = "3600s"
-L1BlockTimestampMargin = "120s"
-MaxTxSizeForL1 = 131072
+WaitPeriodSendSequence = "1m" # "3m"
+LastBatchVirtualizationTimeMaxWaitPeriod = "60s" # "3600s"
+L1BlockTimestampMargin = "30s"
+MaxTxSizeForL1 = 5000 # 131072
 L2Coinbase =  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 PrivateKey = {Path = "/app/sequencer.keystore", Password = "testonly"}
 SequencesTxFileName = "/app/data/sequencesender.json"
@@ -54,35 +54,35 @@ BatchProofSanityCheckEnabled = true
 Host = "0.0.0.0"
 Port = 50081
 RetryTime = "5s"
-VerifyProofInterval = "60m"
+VerifyProofInterval = "1m"
 ProofStatePollingInterval = "5s"
 TxProfitabilityCheckerType = "acceptall"
 TxProfitabilityMinReward = "1.1"
 IntervalAfterWhichBatchConsolidateAnyway = "0s"
-ChainID = 781
+ChainID = 2442
 ForkId = 11
 CleanupLockedProofsInterval = "120m"
 GeneratingProofCleanupThreshold = "10m"
 GasOffset = 30000
-UpgradeEtrogBatchNumber = 4794474 
-WitnessURL = "http://cdk-erigon:8123"
-SenderAddress = "0x3053c70212FA80903cA98B72CDE30333896c559A"
+UpgradeEtrogBatchNumber = 53893 
+WitnessURL = "http://localhost:8123"
+SenderAddress = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
 UseL1BatchData = true 
 UseFullWitness = false 
 MaxWitnessRetrievalWorkers = 2
 SyncModeOnlyEnabled = false
-SettlementBackend = "agglayer"
-AggLayerTxTimeout = "600s"
-AggLayerURL = "https://agglayer-dev.polygon.technology"
+SettlementBackend = "l1"
+#AggLayerTxTimeout = "600s"
+#AggLayerURL = "https://agglayer-dev.polygon.technology"
 
-[Aggregator.SequencerPrivateKey]
-	Path = "/app/sequencer.keystore"
-	Password = "testonly"
+#[Aggregator.SequencerPrivateKey]
+#	Path = "/app/sequencer.keystore"
+#	Password = "testonly"
 [Aggregator.DB]
 	Name = "aggregator_db"
 	User = "aggregator_user"
 	Password = "aggregator_password"
-	Host = "zkevm10-db"
+	Host = "localhost"
 	Port = "5432"
 	EnableLog = false
 	MaxConns = 200
@@ -91,9 +91,9 @@ AggLayerURL = "https://agglayer-dev.polygon.technology"
 	Level = "info"
 	Outputs = ["stderr"]
 [Aggregator.StreamClient]
-	Server = "cdk-erigon:6900"
+	Server = "localhost:6900"
 [Aggregator.EthTxManager]
-	FrequencyToMonitorTxs = "1s"
+	FrequencyToMonitorTxs = "10s"
 	WaitTxToBeMined = "2m"
 	WaitReceiptMaxTime = "250ms"
 	WaitReceiptCheckInterval = "1s"
@@ -118,9 +118,9 @@ AggLayerURL = "https://agglayer-dev.polygon.technology"
 		DriverName = "sqlite3"
 		DataSource = "file:/tmp/aggregator_sync_db.sqlite"
 	[Aggregator.Synchronizer.Synchronizer]
-		SyncInterval = "10s"
-		SyncChunkSize = 1000
-		GenesisBlockNumber = 0  
+		SyncInterval = "2s"
+		SyncChunkSize = 100
+		GenesisBlockNumber = 5158574
 		SyncUpToBlock = "finalized"
 		BlockFinality = "finalized"
 		OverrideStorageCheck = false
@@ -132,7 +132,7 @@ AggLayerURL = "https://agglayer-dev.polygon.technology"
 	DBPath = "/tmp/L1InfoTreeSync" # TODO: put a more realisitic path here
 	GlobalExitRootAddr = "0xAd1490c248c5d3CbAE399Fd529b79B42984277DF"
 	RollupManagerAddr = "0x32d33D5137a7cFFb54c5Bf8371172bcEc5f310ff"
-	SyncBlockChunkSize = 10
+	SyncBlockChunkSize = 100
 	BlockFinality = "LatestBlock"
 	URLRPCL1 = "http://localhost:8545"
 	WaitForNewBlocksPeriod = "1s"
