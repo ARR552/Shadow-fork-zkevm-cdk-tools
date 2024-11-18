@@ -32,11 +32,12 @@ CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-state-d
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-pool-db
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-prover
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d cdk-erigon
-CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-seqsender
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-pool-manager
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-shadow-fork
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-ssender
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-aggregator
+CDK_ENVIRONMENT=balidium docker compose -f docker-compose.yml up -d zkevm-dac
+CDK_ENVIRONMENT=balidium docker compose -f docker-compose.yml up -d cdk-erigon-validium
 
 docker compose -f docker-compose.yml down --remove-orphans
 
@@ -44,8 +45,9 @@ docker compose -f docker-compose.yml stop zkevm-state-db && docker compose -f do
 docker compose -f docker-compose.yml stop zkevm-pool-db && docker compose -f docker-compose.yml rm -f zkevm-pool-db
 docker compose -f docker-compose.yml stop zkevm-prover && docker compose -f docker-compose.yml rm -f zkevm-prover
 docker compose -f docker-compose.yml stop cdk-erigon && docker compose -f docker-compose.yml rm -f cdk-erigon
-docker compose -f docker-compose.yml stop zkevm-seqsender && docker compose -f docker-compose.yml rm -f zkevm-seqsender
 docker compose -f docker-compose.yml stop zkevm-pool-manager && docker compose -f docker-compose.yml rm -f zkevm-pool-manager
 docker compose -f docker-compose.yml stop zkevm-shadow-fork && docker compose -f docker-compose.yml rm -f zkevm-shadow-fork
 docker compose -f docker-compose.yml stop zkevm-ssender && docker compose -f docker-compose.yml rm -f zkevm-ssender
 docker compose -f docker-compose.yml stop zkevm-aggregator && docker compose -f docker-compose.yml rm -f zkevm-aggregator
+docker compose -f docker-compose.yml stop zkevm-dac && docker compose -f docker-compose.yml rm -f zkevm-dac
+docker compose -f docker-compose.yml stop cdk-erigon-validium && docker compose -f docker-compose.yml rm -f cdk-erigon-validium

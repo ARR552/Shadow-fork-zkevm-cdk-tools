@@ -15,6 +15,7 @@ import (
 
 	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/pol"
 	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonrollupmanager"
+	"github.com/0xPolygon/cdk-contracts-tooling/contracts/banana/polygondatacommittee"
 	polygonzkevmelderberry "github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevm"
 	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum"
@@ -26,24 +27,45 @@ import (
 )
 
 const (
-	// Config to modify
-	SequencerAdminAddress = "0xff6250d0E86A2465B0C1bF8e36409503d6a26963"
-	OldSequencerAddress = "0x761d53b47334bEe6612c0Bd1467FB881435375B2"
-	AggregatorAdminAddress = "0xff6250d0E86A2465B0C1bF8e36409503d6a26963"
-	ZKEVMAddress = "0xA13Ddb14437A8F34897131367ad3ca78416d6bCa"
-	RollupManagerAddr = "0x32d33D5137a7cFFb54c5Bf8371172bcEc5f310ff"
-	PolAddress = "0x6a7c3F4B0651d6DA389AD1d11D962ea458cDCA70"
+	// // Zkevm Config to modify
+	// SequencerAdminAddress = "0xff6250d0E86A2465B0C1bF8e36409503d6a26963"
+	// OldSequencerAddress = "0x761d53b47334bEe6612c0Bd1467FB881435375B2"
+	// AggregatorAdminAddress = "0xff6250d0E86A2465B0C1bF8e36409503d6a26963"
+	// ZKEVMAddress = "0xA13Ddb14437A8F34897131367ad3ca78416d6bCa"
+	// RollupManagerAddr = "0x32d33D5137a7cFFb54c5Bf8371172bcEc5f310ff"
+	// PolAddress = "0x6a7c3F4B0651d6DA389AD1d11D962ea458cDCA70"
+	// PolAmount = "10000000000000000000000"
+	// VerifierSMCAddress  = "0x74c21D41d39B2bfF371e584Ef5c1Ac25e02fBfe3"
+	// DataCommitteeSMCAddress = ""
+	// DataCommitteeOwnerAddress = ""
+	// NewDACAddress = ""
+
+
+	// Validium Config to modify
+	SequencerAdminAddress = "0x21db7c42ae148881b689f9494ede2626679ce4a0"
+	OldSequencerAddress = "0xc457ec7522d1e674ed2c87bf31abafcc74ab79be"
+	AggregatorAdminAddress = "0x229A5bDBb09d8555f9214F7a6784804999BA4E0D"
+	ZKEVMAddress = "0x31f5a206f5C600DCd84898B17c9481CC2b0eE808"
+	RollupManagerAddr = "0xe2ef6215adc132df6913c8dd16487abf118d1764"
+	PolAddress = "0x57e7e56d9dce34c5e899141834bf512061dd9cd0"
 	PolAmount = "10000000000000000000000"
-	VerifierSMCAddress  = "0x74c21D41d39B2bfF371e584Ef5c1Ac25e02fBfe3"
+	VerifierSMCAddress  = "0x118d7abb2F2d36aAc6c6BdD8C3c1f14E7Ad34246"
+	DataCommitteeSMCAddress = "0x2B67a3969Ae8f698fE41436F90E36D4b23A50d93"
+	DataCommitteeOwnerAddress = "0x21DB7C42Ae148881B689F9494ede2626679ce4A0"
+	NewDACAddress = "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+
+	IsValidium = true
 
 	// Usually no need to modify
 	URL = "http://localhost:8545"
-	isGanache=false
+	NewSequencerURL = "http://localhost:8123"
+	IsGanache=false  // This method can only be used with a real prover
 	NewAggregatorAddress = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
 	NewSequencerAddress = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 	NewSequencerAddressPrivateKey = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 	DefaultWaitInterval = 2 * time.Millisecond
 	MockVerifierSMCCode = "0x608060405234801561000f575f80fd5b5060043610610029575f3560e01c80639121da8a1461002d575b5f80fd5b61004760048036038101906100429190610207565b61005d565b6040516100549190610261565b60405180910390f35b5f6001905092915050565b5f604051905090565b5f80fd5b5f80fd5b5f8190508260206018028201111561009457610093610075565b5b92915050565b5f80fd5b5f601f19601f8301169050919050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b6100e48261009e565b810181811067ffffffffffffffff82111715610103576101026100ae565b5b80604052505050565b5f610115610068565b905061012182826100db565b919050565b5f67ffffffffffffffff8211156101405761013f6100ae565b5b602082029050919050565b5f819050919050565b61015d8161014b565b8114610167575f80fd5b50565b5f8135905061017881610154565b92915050565b5f61019061018b84610126565b61010c565b905080602084028301858111156101aa576101a9610075565b5b835b818110156101d357806101bf888261016a565b8452602084019350506020810190506101ac565b5050509392505050565b5f82601f8301126101f1576101f061009a565b5b60016101fe84828561017e565b91505092915050565b5f80610320838503121561021e5761021d610071565b5b5f61022b85828601610079565b92505061030061023d858286016101dd565b9150509250929050565b5f8115159050919050565b61025b81610247565b82525050565b5f6020820190506102745f830184610252565b9291505056fea26469706673582212202bc4dbf8e65a39b33d13893915ee52f1b1c20d94f99171217aa1c733224fd1ad64736f6c63430008140033"
+	RequiredAmountOfSignatures = 1
 )
 var (
 	TRUSTED_AGGREGATOR_ROLE = crypto.Keccak256Hash([]byte("TRUSTED_AGGREGATOR_ROLE"))
@@ -51,6 +73,7 @@ var (
 	// ErrTimeoutReached is thrown when the timeout is reached and
 	// because the condition is not matched
 	ErrTimeoutReached = errors.New("timeout has been reached")
+	urls = []string{"http://localhost:8444"}
 )
 func main() {
 	ctx := context.Background()
@@ -71,13 +94,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("error setting L1timestamp. Error: %v", err)
 	}
-	err = changeSequencerAddress(ctx, ethClient, common.HexToAddress(NewSequencerAddress), common.HexToAddress(SequencerAdminAddress), zkevm)
+	err = changeSequencerAddress(ctx, ethClient, common.HexToAddress(NewSequencerAddress), common.HexToAddress(SequencerAdminAddress), NewSequencerURL, zkevm)
 	if err != nil {
 		log.Fatal("error changing sequencer address. Error: ", err)
 	}
 	err = changeAggregatorAddress(ctx, ethClient, common.HexToAddress(NewAggregatorAddress), common.HexToAddress(AggregatorAdminAddress), rollupManager)
 	if err != nil {
-		log.Fatal("error changing sequencer address. Error: ", err)
+		log.Fatal("error changing aggregator address. Error: ", err)
 	}
 	err = sendPolTokensToNewSequencerAddress(ctx, ethClient, common.HexToAddress(NewSequencerAddress), common.HexToAddress(OldSequencerAddress))
 	if err != nil {
@@ -87,6 +110,16 @@ func main() {
 	if err != nil {
 		log.Fatal("error setting smc code. Error: ", err)
 	}
+	if IsValidium {
+		dataCommittee, err := polygondatacommittee.NewPolygondatacommittee(common.HexToAddress(DataCommitteeSMCAddress), ethClient)
+		if err != nil {
+			log.Fatal("error creating NewPolygondatacommittee client (%s). Error: ", DataCommitteeSMCAddress, err)
+		}
+		err = setCommittee(ctx, ethClient, common.HexToAddress(DataCommitteeSMCAddress), common.HexToAddress(DataCommitteeOwnerAddress), common.HexToAddress(NewDACAddress), dataCommittee)
+		if err != nil {
+			log.Fatal("error setting committee. Error: ", err)
+		}
+	}
 }
 
 type Tx struct {
@@ -94,12 +127,16 @@ type Tx struct {
 	To   string `json:"to"`
 	Data string `json:"data"`
 }
-func changeSequencerAddress(ctx context.Context, ethClient *ethclient.Client, newSeqAddress, seqAdminAddress common.Address, zkevm *polygonzkevmelderberry.Polygonzkevm) error {
+func changeSequencerAddress(ctx context.Context, ethClient *ethclient.Client, newSeqAddress, seqAdminAddress common.Address, newURL string, zkevm *polygonzkevmelderberry.Polygonzkevm) error {
 	err := impersonateAccount(seqAdminAddress)
 	if err != nil {
 		return err
 	}
 	err = setNewSequencerAddress(ctx, ethClient, newSeqAddress, seqAdminAddress)
+	if err != nil {
+		return err
+	}
+	err = setNewSequencerURL(ctx, ethClient, newURL, seqAdminAddress)
 	if err != nil {
 		return err
 	}
@@ -114,6 +151,14 @@ func changeSequencerAddress(ctx context.Context, ethClient *ethclient.Client, ne
 	}
 	if address != newSeqAddress {
 		return fmt.Errorf("error setting new sequencer address. Expected address: %s, received address: %s", newSeqAddress.String(), address.String())
+	}
+	// Check if the trusted sequencer URL has been modified successfully 
+	url, err := zkevm.TrustedSequencerURL(&bind.CallOpts{Pending: false})
+	if err != nil {
+		return err
+	}
+	if url != newURL {
+		return fmt.Errorf("error setting new sequencer URL. Expected URL: %s, received URL: %s", newURL, url)
 	}
 	return nil
 }
@@ -138,6 +183,30 @@ func changeAggregatorAddress(ctx context.Context, ethClient *ethclient.Client, n
 		return err
 	} else if !ok {
 		return fmt.Errorf("error setting new trusted aggregator address. New aggregator address (%s) hasn't the role TRUSTED_AGGREGATOR_ROLE (%s)", newAggAddress.String(), TRUSTED_AGGREGATOR_ROLE.String())
+	}
+	return nil
+}
+
+func setCommittee(ctx context.Context, ethClient *ethclient.Client, dataCommitteeAddress, dataCommitteeOwnerAddress, newDACAddress common.Address, dataCommittee *polygondatacommittee.Polygondatacommittee) error {
+	err := impersonateAccount(dataCommitteeOwnerAddress)
+	if err != nil {
+		return err
+	}
+	err = setNewCommittee(ctx, ethClient, dataCommitteeAddress, dataCommitteeOwnerAddress, big.NewInt(RequiredAmountOfSignatures), urls, newDACAddress.Bytes())
+	if err != nil {
+		return err
+	}
+	err = stopImpersonatingAccount(dataCommitteeOwnerAddress)
+	if err != nil {
+		return err
+	}
+	// Check if the Committee has been modified successfully 
+	cd, err := dataCommittee.Members(&bind.CallOpts{Pending: false}, big.NewInt(0))
+	if err != nil {
+		return err
+	}
+	if cd.Addr != newDACAddress {
+		return fmt.Errorf("error setting new committee. Expected address: %s, received address: %s", newDACAddress.String(), cd.Addr.String())
 	}
 	return nil
 }
@@ -269,6 +338,95 @@ func setNewSequencerAddress(ctx context.Context, ethClient *ethclient.Client, ne
 	_, err = WaitTxReceipt(ctx, common.HexToHash((*respBody.Result).(string)), timeout, ethClient)
 	return err
 }
+
+func setNewSequencerURL(ctx context.Context, ethClient *ethclient.Client, newURL string, seqAdminAddress common.Address) error {
+	a, _ := polygonzkevmelderberry.PolygonzkevmMetaData.GetAbi()
+	input, err := a.Pack("setTrustedSequencerURL", newURL)
+	if err != nil {
+		log.Error("error packing call setTrustedSequencerURL. Error: ", err)
+		return err
+	}
+	tx := Tx {
+		From: seqAdminAddress.String(),
+		To:   ZKEVMAddress,
+		Data: fmt.Sprintf("0x%s",common.Bytes2Hex(input)),
+	}
+	body := RequestBody {
+		Jsonrpc: "2.0",
+		Method:  "eth_sendTransaction",
+		Params:  []interface{}{tx},
+		Id:      1,
+	}
+	reqBody, err := json.Marshal(body)
+    if err != nil {
+		log.Errorf("error marshalling in setting new trusted sequencer URL. Error: %v", err)
+        return err
+    }
+	bodyBytes, err := callRpc(reqBody)
+	if err != nil {
+		log.Errorf("error calling RPC in setting new trusted sequencer URL. Error: %v", err)
+		return err
+	}
+	var respBody ResponseBody
+	err = json.Unmarshal(bodyBytes, &respBody)
+	if err != nil {
+		log.Errorf("error unmarshalling response body in stop setting new trusted sequencer URL. Error: %v", err)
+		return err
+	}
+	if respBody.Error != nil {
+		return fmt.Errorf("error stop setting new trusted sequencer URL. Error: %s", respBody.Error.Message)
+	}
+	log.Debugf("NewSequencer URL transaction response: %+v", *respBody.Result)
+	// Wait until tx is mined
+	timeout := 20 * time.Second
+	_, err = WaitTxReceipt(ctx, common.HexToHash((*respBody.Result).(string)), timeout, ethClient)
+	return err
+}
+
+func setNewCommittee(ctx context.Context, ethClient *ethclient.Client, dataCommitteeAddress, dataCommitteeOwnerAddress common.Address, requiredAmountOfSignatures *big.Int, urls []string, addrsByte []byte) error {
+	a, _ := polygondatacommittee.PolygondatacommitteeMetaData.GetAbi()
+	input, err := a.Pack("setupCommittee", requiredAmountOfSignatures, urls, addrsByte)
+	if err != nil {
+		log.Error("error packing call setupCommittee. Error: ", err)
+		return err
+	}
+	tx := Tx {
+		From: dataCommitteeOwnerAddress.String(),
+		To:   dataCommitteeAddress.String(),
+		Data: fmt.Sprintf("0x%s",common.Bytes2Hex(input)),
+	}
+	body := RequestBody {
+		Jsonrpc: "2.0",
+		Method:  "eth_sendTransaction",
+		Params:  []interface{}{tx},
+		Id:      1,
+	}
+	reqBody, err := json.Marshal(body)
+    if err != nil {
+		log.Errorf("error marshalling in setting new committee. Error: %v", err)
+        return err
+    }
+	bodyBytes, err := callRpc(reqBody)
+	if err != nil {
+		log.Errorf("error calling RPC in setting new committee. Error: %v", err)
+		return err
+	}
+	var respBody ResponseBody
+	err = json.Unmarshal(bodyBytes, &respBody)
+	if err != nil {
+		log.Errorf("error unmarshalling response body in stop setting new committee. Error: %v", err)
+		return err
+	}
+	if respBody.Error != nil {
+		return fmt.Errorf("error stop setting new committee. Error: %s", respBody.Error.Message)
+	}
+	log.Debugf("NewCommittee transaction response: %+v", *respBody.Result)
+	// Wait until tx is mined
+	timeout := 30 * time.Second
+	_, err = WaitTxReceipt(ctx, common.HexToHash((*respBody.Result).(string)), timeout, ethClient)
+	return err
+}
+
 func sendPolTokens(ctx context.Context, ethClient *ethclient.Client, newSeqAddress, oldSequencerAddress common.Address, amount *big.Int) error {
 	a, _ := pol.PolMetaData.GetAbi()
 	input, err := a.Pack("transfer", newSeqAddress, amount)
@@ -329,7 +487,7 @@ type ResponseBody struct {
 	} `json:"error"`
 }
 func impersonateAccount(addr common.Address) error {
-	if isGanache {
+	if IsGanache {
 		// Defined in command line
 		return nil
 	}
@@ -362,7 +520,7 @@ func impersonateAccount(addr common.Address) error {
 }
 
 func stopImpersonatingAccount(addr common.Address) error {
-	if isGanache {
+	if IsGanache {
 		// Defined in command line
 		return nil
 	}
@@ -395,7 +553,7 @@ func stopImpersonatingAccount(addr common.Address) error {
 }
 
 func setCodeSMC(addr common.Address, smcCode string) error {
-	if isGanache {
+	if IsGanache {
 		// I didn't find the equivalent feature for ganache
 		return nil
 	}

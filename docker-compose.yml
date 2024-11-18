@@ -76,19 +76,26 @@ services:
       - "-c"
       - "chmod -R 777 /home/erigon/erigon/ && CDK_ERIGON_SEQUENCER=1 cdk-erigon --config /etc/cdk-erigon/config.yaml"
   
-  # zkevm-seqsender:
-  #   network_mode: host
-  #   container_name: zkevm-seqsender
-  #   image: hermeznetwork/zkevm-sequence-sender:v0.2.4
-  #   volumes:
-  #     - ./config/${CDK_ENVIRONMENT}/sequence-sender.config.toml:/app/config.toml
-  #     - ./config/${CDK_ENVIRONMENT}/genesis.json:/app/genesis.json
-  #     - ./config/sequencer.keystore:/app/sequencer.keystore
-  #     # - data:/app/data
-  #   command:
-  #     - "/bin/sh"
-  #     - "-c"
-  #     - "/app/zkevm-seqsender run --cfg /app/config.toml --network custom --custom-network-file /app/genesis.json"
+  cdk-erigon-validium:
+    network_mode: host
+    user: root
+    container_name: cdk-erigon-validium
+    image: hermeznetwork/cdk-erigon:v2.60.0-beta8
+    restart: always 
+    ports:
+      - 9092:9092
+      - 6900:6900
+      - 8123:8123
+    volumes:
+      - ./config/${CDK_ENVIRONMENT}/cdk-erigon.config.yaml:/etc/cdk-erigon/config.yaml
+      - ./config/${CDK_ENVIRONMENT}/dynamic-network-allocs.json:/etc/cdk-erigon/dynamic-network-allocs.json
+      - ./config/${CDK_ENVIRONMENT}/dynamic-network-chainspec.json:/etc/cdk-erigon/dynamic-network-chainspec.json
+      - ./config/${CDK_ENVIRONMENT}/dynamic-network-conf.json:/etc/cdk-erigon/dynamic-network-conf.json
+      - ./erigon-datadir/${CDK_ENVIRONMENT}:/home/erigon/erigon/.local/share/erigon
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - "chmod -R 777 /home/erigon/erigon/ && CDK_ERIGON_SEQUENCER=1 cdk-erigon --config /etc/cdk-erigon/config.yaml"
 
   zkevm-pool-manager:
     container_name: zkevm-pool-manager
@@ -126,7 +133,7 @@ services:
   zkevm-ssender:
     network_mode: host
     container_name: zkevm-ssender
-    image: ghcr.io/0xpolygon/cdk:0.3.1
+    image: ghcr.io/0xpolygon/cdk:0.3.2
     restart: always 
     volumes:
       - ./config/${CDK_ENVIRONMENT}/data-cdk-node/ssender-data:/app/data
@@ -143,7 +150,7 @@ services:
   zkevm-aggregator:
     network_mode: host
     container_name: zkevm-aggregator
-    image: ghcr.io/0xpolygon/cdk:0.3.1
+    image: ghcr.io/0xpolygon/cdk:0.3.2
     ports:
       - 50081:50081
     volumes:
@@ -157,3 +164,17 @@ services:
       - "/bin/sh"
       - "-c"
       - "cdk-node run -custom-network-file=/app/genesis.json -cfg=/app/config.toml -components=aggregator"
+
+  zkevm-dac:
+    network_mode: host
+    container_name: zkevm-dac
+    image: 0xpolygon/cdk-data-availability:0.0.10
+    ports:
+      - 8444:8444
+    volumes:
+      - ./config/${CDK_ENVIRONMENT}/dac.config.toml:/app/config.toml:ro
+      - ./config/dac.keystore:/pk/dac.keystore:ro
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - "/app/cdk-data-availability run -cfg=/app/config.toml"

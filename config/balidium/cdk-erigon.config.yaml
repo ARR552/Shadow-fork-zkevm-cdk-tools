@@ -1,0 +1,68 @@
+datadir: ./erigon/.local/share/erigon
+chain: dynamic-network
+
+zkevm.l2-chain-id: 2445
+# zkevm.l2-sequencer-rpc-url: https://rpc.balidium.zkevm-rpc.com/
+# zkevm.l2-datastreamer-url: datastream.balidium.zkevm-rpc.com:6900
+# zkevm.l2-datastreamer-timeout: "0s"
+
+# zkevm.sync-limit: 168502 # 168501 is the latest blocknum for batch 298
+
+zkevm.l1-chain-id: 11155111
+zkevm.l1-rpc-url: http://localhost:8545
+zkevm.l1-rollup-id: 12
+zkevm.l1-first-block: 4794473
+zkevm.l1-block-range: 5000
+# zkevm.l1-sync-start-block: 4794473 #disable this param to avoid recovery mode
+
+zkevm.address-sequencer: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+zkevm.address-zkevm: "0x31f5a206f5C600DCd84898B17c9481CC2b0eE808"
+zkevm.address-admin: "0x21db7c42ae148881b689f9494ede2626679ce4a0"
+zkevm.address-rollup: "0xe2ef6215adc132df6913c8dd16487abf118d1764"
+zkevm.address-ger-manager: "0x2968D6d736178f8FE7393CC33C87f29D9C287e78"
+
+zkevm.executor-strict: false
+# zkevm.executor-urls: "${STATELESS_EXECUTOR}"
+zkevm.witness-full: false
+zkevm.sequencer-block-seal-time: "3s"
+zkevm.sequencer-batch-seal-time: "3m"
+zkevm.allow-pre-eip155-transactions: true
+zkevm.disable-virtual-counters: false
+
+zkevm.default-gas-price: 1
+zkevm.max-gas-price: 0
+zkevm.gas-price-factor: 0.12
+
+zkevm.rpc-ratelimit: 250
+
+zkevm.data-stream-host: "0.0.0.0"
+zkevm.data-stream-port: 6900
+zkevm.data-stream-inactivity-timeout: "10m"
+zkevm.data-stream-inactivity-check-interval: "1m"
+zkevm.data-stream-writeTimeout: "20s"
+
+# zkevm.limbo: ${LIMBO_MODE}
+
+
+txpool.disable: false
+txpool.globalslots: 30000
+txpool.globalbasefeeslots: 30000
+txpool.globalqueue: 30000
+torrent.port: 42070
+
+http: true
+private.api.addr: localhost:9092
+externalcl: true
+http.api: [eth, debug, net, trace, web3, erigon, zkevm, txpool]
+http.addr: 0.0.0.0
+http.port: 8123
+http.vhosts: '*'
+http.corsdomain: '*'
+ws: true
+
+log.json: true
+log.console.verbosity: "debug"
+
+db.size.limit: 8TB
+
+debug.timers: true

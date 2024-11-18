@@ -5,6 +5,7 @@ go 1.22
 toolchain go1.22.8
 
 require (
+	github.com/0xPolygon/cdk-contracts-tooling v0.0.0-20240826154954-f6182d2b17a2
 	github.com/0xPolygonHermez/zkevm-node v0.7.3
 	github.com/ethereum/go-ethereum v1.14.11
 )

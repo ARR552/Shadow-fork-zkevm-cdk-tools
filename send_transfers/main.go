@@ -8,7 +8,7 @@ import (
 	"github.com/0xPolygonHermez/zkevm-node/hex"
 	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/0xPolygonHermez/zkevm-node/test/operations"
-	// "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -87,17 +87,17 @@ func ethTransfer(ctx context.Context, client *ethclient.Client, auth *bind.Trans
 		nonce = &n
 	}
 
-	// gasPrice, err := client.SuggestGasPrice(context.Background())
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return nil, err
-	// }
-	// gasLimit, err := client.EstimateGas(context.Background(), ethereum.CallMsg{To: &to})
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return nil, err
-	// }
-	tx := types.NewTransaction(*nonce, to, amount, 1000000, big.NewInt(100), nil)
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+	gasLimit, err := client.EstimateGas(context.Background(), ethereum.CallMsg{To: &to})
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+	tx := types.NewTransaction(*nonce, to, amount, gasLimit, gasPrice, nil)
 
 	signedTx, err := auth.Signer(auth.From, tx)
 	if err != nil {
