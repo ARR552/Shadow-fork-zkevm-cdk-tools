@@ -30,7 +30,7 @@ The file `./sendImpersonateTransfer.js` shows a way to impersonate an account in
 
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-state-db
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-pool-db
-CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-prover
+docker compose -f docker-compose.yml up -d zkevm-prover
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d cdk-erigon
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-pool-manager
 CDK_ENVIRONMENT=cardona docker compose -f docker-compose.yml up -d zkevm-shadow-fork
